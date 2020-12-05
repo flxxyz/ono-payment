@@ -1,24 +1,27 @@
-package alipay
+package trade
 
 import (
 	"encoding/json"
+	"github.com/flxxyz/ono"
 	"github.com/smartwalle/alipay/v3"
 	"log"
 	"payment/conf"
 	"payment/dto"
 	"payment/service"
-	"payment/trade"
 )
 
-type Trade struct {
-	trade.Controller
+var AlipayController = &controller{}
+
+type controller struct {
+	*Controller
+	Trade
 }
 
-func (t *Trade) App() {
-	raw := t.RequestBody(&dto.BodyApp{}).(*dto.BodyApp)
+func (c *controller) App(ctx *ono.Context) {
+	raw := ctx.RequestBody(&dto.BodyApp{}).(*dto.BodyApp)
 
 	//data, _ := json.Marshal(raw)
-	//_, _ = t.Writer.Write(data)
+	//_, _ = ctx.Writer.Write(data)
 
 	// 内部订单号
 	orderId := "xxxxxxxxxxxxxxx"
@@ -41,7 +44,7 @@ func (t *Trade) App() {
 		Amount:      amount,
 		Phone:       raw.Phone,
 		CountryCode: "86",
-		IP:          t.ClientIP(), // Todo: 支付时的用户IP
+		IP:          ctx.ClientIP(), // Todo: 支付时的用户IP
 		URL:         raw.URL,
 		PayType:     conf.PayTypeAliapyApp,
 	})
@@ -50,14 +53,14 @@ func (t *Trade) App() {
 
 	// Todo: 创建支付请求
 
-	t.JSON(0, dto.TradeRespApp{
+	ctx.JSON(0, dto.TradeRespApp{
 		OrderId: orderId,
 		PayInfo: result,
 	})
 }
 
-func (t *Trade) Wap() {
-	raw := t.RequestBody(&dto.BodyWap{}).(*dto.BodyWap)
+func (c *controller) Wap(ctx *ono.Context) {
+	raw := ctx.RequestBody(&dto.BodyWap{}).(*dto.BodyWap)
 
 	//data, _ := json.Marshal(raw)
 	//_, _ = t.Writer.Write(data)
@@ -83,7 +86,7 @@ func (t *Trade) Wap() {
 		Amount:      amount,
 		Phone:       raw.Phone,
 		CountryCode: "86",
-		IP:          t.ClientIP(),
+		IP:          ctx.ClientIP(),
 		URL:         raw.URL,
 		PayType:     conf.PayTypeAliapyH5,
 	})
@@ -92,14 +95,14 @@ func (t *Trade) Wap() {
 
 	// Todo: 创建支付请求
 
-	t.JSON(0, dto.TradeRespWap{
+	ctx.JSON(0, dto.TradeRespWap{
 		OrderId: orderId,
 		MWebURL: uri.String(),
 	})
 }
 
-func (t *Trade) Notify() {
-	notice, _ := service.AlipayParseNotify(t.Request)
+func (c *controller) Notify(ctx *ono.Context) {
+	notice, _ := service.AlipayParseNotify(ctx.Request)
 	if notice != nil {
 		switch notice.TradeStatus {
 		case alipay.TradeStatusSuccess:
@@ -118,12 +121,12 @@ func (t *Trade) Notify() {
 		}
 	}
 
-	alipay.AckNotification(t.Writer)
+	alipay.AckNotification(ctx.Writer)
 }
 
-func (t *Trade) Query() {
-	tradeNo := t.GetString("tradeNo")
-	orderId := t.GetString("orderId")
+func (c *controller) Query(ctx *ono.Context) {
+	tradeNo := ctx.GetString("tradeNo")
+	orderId := ctx.GetString("orderId")
 	if orderId == "" {
 		log.Println("[支付宝] [Query] 内部订单号不允许为空！")
 		return

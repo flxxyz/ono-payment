@@ -1,24 +1,21 @@
 package trade
 
 import (
+	"github.com/flxxyz/ono"
 	"net/http"
-	"payment/context"
 )
 
 type Trade interface {
-	App() context.HandleFunc
-	Wap() context.HandleFunc
-	JSAPI() context.HandleFunc
-	Native() context.HandleFunc
-	Notify() context.HandleFunc
-	Query() context.HandleFunc
+	App() ono.HandleFunc
+	Wap() ono.HandleFunc
+	JSAPI() ono.HandleFunc
+	Native() ono.HandleFunc
+	Notify() ono.HandleFunc
+	Query() ono.HandleFunc
 }
 
-type Controller struct {
-	*context.Controller
-	Trade
-}
+type Controller struct{}
 
-func (c *Controller) Homepage() {
-	c.String(http.StatusOK, "hello payment")
+func (c *Controller) Ohhhhhh(ctx *ono.Context) {
+	ctx.String(http.StatusOK, "ohhhhhhhhhhhhhhhhhhhhhhh")
 }

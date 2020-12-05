@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	AppConf "github.com/flxxyz/ono/conf"
 	"github.com/smartwalle/alipay/v3"
 	"net/http"
 	"net/url"
@@ -30,7 +31,7 @@ func init() {
 	alipayConfig.sellerName = conf.AlipaySellerName
 	alipayConfig.isProduction = true
 
-	if conf.DefaultAppConfig().Debug {
+	if AppConf.DefaultAppConfig().Debug {
 		alipayConfig.publicKey = conf.AlipaySandboxPublicKey
 		alipayConfig.appId = conf.AlipaySandboxAppid
 		alipayConfig.sellerId = conf.AlipaySandboxSellerId
