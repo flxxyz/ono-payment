@@ -15,7 +15,7 @@ type Trade interface {
 }
 
 type Controller struct {
-	*context.Context
+	*context.Controller
 	Trade
 }
 

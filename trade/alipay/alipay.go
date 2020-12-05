@@ -99,7 +99,7 @@ func (t *Trade) Wap() {
 }
 
 func (t *Trade) Notify() {
-	notice, _ := service.AlipayParseNotify(t.Context.Request)
+	notice, _ := service.AlipayParseNotify(t.Request)
 	if notice != nil {
 		switch notice.TradeStatus {
 		case alipay.TradeStatusSuccess:
@@ -118,7 +118,7 @@ func (t *Trade) Notify() {
 		}
 	}
 
-	alipay.AckNotification(t.Context.Writer)
+	alipay.AckNotification(t.Writer)
 }
 
 func (t *Trade) Query() {

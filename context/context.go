@@ -14,7 +14,11 @@ type Context struct {
 	*gin.Context
 }
 
-func (c *Context) RequestBody(data interface{}) interface{} {
+type Controller struct {
+	*Context
+}
+
+func (c *Controller) RequestBody(data interface{}) interface{} {
 	body, _ := ioutil.ReadAll(c.Request.Body)
 	_ = json.Unmarshal(body, data)
 	return data
