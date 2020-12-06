@@ -10,14 +10,14 @@ import (
 	"payment/service"
 )
 
-var AlipayController = &controller{}
+var AlipayController = &alipayController{}
 
-type controller struct {
+type alipayController struct {
 	*Controller
 	Trade
 }
 
-func (c *controller) App(ctx *ono.Context) {
+func (c *alipayController) App(ctx *ono.Context) {
 	raw := ctx.RequestBody(&dto.BodyApp{}).(*dto.BodyApp)
 
 	//data, _ := json.Marshal(raw)
@@ -59,7 +59,7 @@ func (c *controller) App(ctx *ono.Context) {
 	})
 }
 
-func (c *controller) Wap(ctx *ono.Context) {
+func (c *alipayController) Wap(ctx *ono.Context) {
 	raw := ctx.RequestBody(&dto.BodyWap{}).(*dto.BodyWap)
 
 	//data, _ := json.Marshal(raw)
@@ -78,6 +78,7 @@ func (c *controller) Wap(ctx *ono.Context) {
 	)
 	if err != nil {
 		log.Println("[支付宝] [Wap] 生成支付链接失败:", err.Error())
+		ctx.Fail("生成支付链接失败")
 		return
 	}
 
@@ -95,13 +96,13 @@ func (c *controller) Wap(ctx *ono.Context) {
 
 	// Todo: 创建支付请求
 
-	ctx.JSON(0, dto.TradeRespWap{
+	ctx.Response(0, dto.TradeRespWap{
 		OrderId: orderId,
 		MWebURL: uri.String(),
 	})
 }
 
-func (c *controller) Notify(ctx *ono.Context) {
+func (c *alipayController) Notify(ctx *ono.Context) {
 	notice, _ := service.AlipayParseNotify(ctx.Request)
 	if notice != nil {
 		switch notice.TradeStatus {
@@ -124,36 +125,43 @@ func (c *controller) Notify(ctx *ono.Context) {
 	alipay.AckNotification(ctx.Writer)
 }
 
-func (c *controller) Query(ctx *ono.Context) {
-	tradeNo := ctx.GetString("tradeNo")
-	orderId := ctx.GetString("orderId")
-	if orderId == "" {
-		log.Println("[支付宝] [Query] 内部订单号不允许为空！")
-		return
-	}
+func (c *alipayController) Query(ctx *ono.Context) {
+	tradeNo := ctx.Query("tradeNo")
+	orderId := ctx.Query("orderId")
+	//if orderId == "" {
+	//	log.Println("[支付宝] [Query] 内部订单号不允许为空！")
+	//	c.Fail(ctx, "内部订单号不允许为空!")
+	//	return
+	//}
 
 	resp, err := service.AlipayTradeQuery(tradeNo, orderId)
 	if err != nil {
 		log.Println("[支付宝] [Query] 查询订单出错！", err.Error())
+		ctx.Fail("查询订单出错!")
 		return
 	}
 
 	if !resp.IsSuccess() {
 		log.Println("[支付宝] [Query] 查询订单接口调用失败！", resp)
+		ctx.Fail("查询订单出错!")
 	} else {
 		switch resp.Content.TradeStatus {
 		case alipay.TradeStatusSuccess:
 			log.Println("[支付宝] [Query] 查询订单成功")
+			ctx.Success("查询订单成功")
 			break
 		case alipay.TradeStatusFinished:
 			log.Println("[支付宝] [Query] 交易结束，不可退款")
+			ctx.Fail("交易结束，不可退款")
 			break
 		case alipay.TradeStatusWaitBuyerPay:
 			log.Println("[支付宝] [Query] 交易创建，等待买家付款")
+			ctx.Fail("交易创建，等待买家付款")
 			break
 		case alipay.TradeStatusClosed:
 		default:
 			log.Println("[支付宝] [Query] 未付款交易超时关闭，或支付完成后全额退款")
+			ctx.Fail("查询订单成功!")
 			break
 		}
 	}

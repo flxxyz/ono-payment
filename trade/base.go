@@ -2,7 +2,6 @@ package trade
 
 import (
 	"github.com/flxxyz/ono"
-	"net/http"
 )
 
 type Trade interface {
@@ -15,7 +14,3 @@ type Trade interface {
 }
 
 type Controller struct{}
-
-func (c *Controller) Ohhhhhh(ctx *ono.Context) {
-	ctx.String(http.StatusOK, "ohhhhhhhhhhhhhhhhhhhhhhh")
-}
